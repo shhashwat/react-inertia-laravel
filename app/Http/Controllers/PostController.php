@@ -3,9 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Post;
-use App\Http\Requests\StorePostRequest;
-use App\Http\Requests\UpdatePostRequest;
-use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class PostController extends Controller
 {
@@ -14,7 +12,7 @@ class PostController extends Controller
      */
     public function index()
     {
-        $posts = Post::latest()->paginate(10);
+        $posts = Post::latest()->paginate(9);
     
         return inertia('Home', [
             'posts' => $posts
@@ -26,15 +24,21 @@ class PostController extends Controller
      */
     public function create()
     {
-        //
+        return inertia('Create');
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StorePostRequest $request)
+    public function store(Request $request)
     {
-        //
+        $fields = $request->validate([
+            'body' => ['required', 'string', 'min:5'],
+       ]);
+
+       $post = Post::create($fields);
+
+        return redirect('/');
     }
 
     /**
@@ -42,7 +46,9 @@ class PostController extends Controller
      */
     public function show(Post $post)
     {
-        //
+        return inertia('Show',[
+            'post' => $post
+        ]);
     }
 
     /**
@@ -56,9 +62,22 @@ class PostController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdatePostRequest $request, Post $post)
-    {
-        //
+    public function update(Request $request, Post $post)
+    {   
+        $fields = $request->validate([
+            'body' => ['required', 'string', 'min:5'],
+        ]);
+
+        if($fields['body'] === $post->body) {
+            return redirect()->back()->with([
+                'error' => 'Post  '. $post->id .' was not updated!'
+            ]);
+        }
+
+        $post->update($fields);
+        return redirect()->back()->with([
+            'message' => 'Post  '. $post->id .' was updated!'
+        ]);
     }
 
     /**
@@ -66,6 +85,10 @@ class PostController extends Controller
      */
     public function destroy(Post $post)
     {
-        //
+        $post->delete();
+
+        return redirect('/')->with([
+            'message' => 'Post  '. $post->id .' was deleted!'
+        ]);
     }
 }
